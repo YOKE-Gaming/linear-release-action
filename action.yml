@@ -1,0 +1,9 @@
+name: "Linear Release Action"
+description: "Automatically labels Linear issues with release versions"
+inputs:
+  linear_api_key:
+    description: "Linear API key"
+    required: true
+runs:
+  using: "node16"
+  main: "dist/index.js"
