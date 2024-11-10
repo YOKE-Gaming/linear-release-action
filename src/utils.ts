@@ -28,11 +28,6 @@ export function getInput(name: string): string {
   return process.env[name] ?? core.getInput(name);
 }
 
-export function reportErrorAndExit(message: string): never {
-  core.setFailed(message);
-  throw new Error(message);
-}
-
 export async function createVersionLabel({
   client,
   version,
@@ -95,7 +90,7 @@ export async function createVersionLabel({
     core.info(`Found label with name: ${version}`);
   }
   if (!versionLabel) {
-    reportErrorAndExit(`Failed to create or find label ${version} in Linear.`);
+    throw new Error(`Failed to create or find label ${version} in Linear.`);
   }
   return versionLabel;
 }
@@ -141,7 +136,7 @@ export async function updateIssues(
     },
   });
   if (issuesToUpdate.nodes.length === 0) {
-    reportErrorAndExit("No issues found to update.");
+    throw new Error("No issues found to update.");
   }
 
   core.info(`Found ${issuesToUpdate.nodes.length} issues to update.`);

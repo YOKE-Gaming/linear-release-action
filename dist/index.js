@@ -34695,8 +34695,6 @@ async function run() {
         const apiKey = (0, utils_1.getInput)("linearApiKey");
         const slackToken = (0, utils_1.getInput)("slackToken");
         const slackChannel = (0, utils_1.getInput)("slackChannel");
-        core.info(`slackChannel: ${slackChannel}`);
-        core.info(`slackToken: ${slackToken}`);
         // Initialize clients
         const client = new sdk_1.LinearClient({ apiKey });
         const slackClient = new web_api_1.WebClient(slackToken);
@@ -34760,7 +34758,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.sendToSlack = exports.compileChangelog = exports.updateIssues = exports.getDoneStatus = exports.createVersionLabel = exports.reportErrorAndExit = exports.getInput = exports.getRepoName = exports.getVersion = void 0;
+exports.sendToSlack = exports.compileChangelog = exports.updateIssues = exports.getDoneStatus = exports.createVersionLabel = exports.getInput = exports.getRepoName = exports.getVersion = void 0;
 const core = __importStar(__nccwpck_require__(6847));
 const fs = __importStar(__nccwpck_require__(9896));
 const dotenv = __importStar(__nccwpck_require__(3329));
@@ -34787,11 +34785,6 @@ function getInput(name) {
     return process.env[name] ?? core.getInput(name);
 }
 exports.getInput = getInput;
-function reportErrorAndExit(message) {
-    core.setFailed(message);
-    throw new Error(message);
-}
-exports.reportErrorAndExit = reportErrorAndExit;
 async function createVersionLabel({ client, version, repoName, }) {
     core.info(`Creating a new label for version: ${version}...`);
     const parentLabelNodes = await client.issueLabels({
@@ -34844,7 +34837,7 @@ async function createVersionLabel({ client, version, repoName, }) {
         core.info(`Found label with name: ${version}`);
     }
     if (!versionLabel) {
-        reportErrorAndExit(`Failed to create or find label ${version} in Linear.`);
+        throw new Error(`Failed to create or find label ${version} in Linear.`);
     }
     return versionLabel;
 }
@@ -34881,7 +34874,7 @@ async function updateIssues(client, { versionLabel, repoName, stateId, }) {
         },
     });
     if (issuesToUpdate.nodes.length === 0) {
-        reportErrorAndExit("No issues found to update.");
+        throw new Error("No issues found to update.");
     }
     core.info(`Found ${issuesToUpdate.nodes.length} issues to update.`);
     for (const issue of issuesToUpdate.nodes) {
