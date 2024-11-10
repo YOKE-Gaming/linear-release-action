@@ -42,7 +42,7 @@ export async function createVersionLabel({
   version: string;
   repoName: string;
 }): Promise<IssueLabel> {
-  core.info(`***Creating a new label for version: ${version}...`);
+  core.info(`Creating a new label for version: ${version}...`);
   const parentLabelNodes = await client.issueLabels({
     filter: {
       name: {
