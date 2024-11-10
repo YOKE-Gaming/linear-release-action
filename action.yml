@@ -4,6 +4,12 @@ inputs:
   linearApiKey:
     description: "Linear API key"
     required: true
+  slackToken:
+    description: "Slack bot token"
+    required: true
+  slackChannel:
+    description: "Slack channel to send release notes to"
+    required: true
 runs:
-  using: "node16"
+  using: "node20"
   main: "dist/index.js"
