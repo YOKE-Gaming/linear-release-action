@@ -18,6 +18,7 @@ import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
 export async function run() {
+  core.info("Starting release action...");
   try {
     // Get inputs from action
     const apiKey = getInput("linearApiKey");
