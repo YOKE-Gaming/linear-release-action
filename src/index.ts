@@ -42,6 +42,8 @@ export async function run() {
     });
 
     const changelog = await compileChangelog({ issues, repoName, version });
+    core.info(`Changelog:\n${changelog}`);
+    core.info(`Sending to Slack...`);
     await sendToSlack(slackClient, slackChannel, changelog);
 
     core.info("Done.");
