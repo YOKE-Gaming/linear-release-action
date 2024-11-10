@@ -1,7 +1,7 @@
 name: "Linear Release Action"
 description: "Automatically labels Linear issues with release versions"
 inputs:
-  linear_api_key:
+  linearApiKey:
     description: "Linear API key"
     required: true
 runs:
