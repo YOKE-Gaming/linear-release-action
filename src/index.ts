@@ -23,8 +23,8 @@ export async function run() {
     const apiKey = getInput("linearApiKey");
     const slackToken = getInput("slackToken");
     const slackChannel = getInput("slackChannel");
-    console.log("slackChannel", slackChannel);
-    console.log("slackToken", slackToken);
+    core.info(`slackChannel: ${slackChannel}`);
+    core.info(`slackToken: ${slackToken}`);
 
     // Initialize clients
     const client = new LinearClient({ apiKey });
