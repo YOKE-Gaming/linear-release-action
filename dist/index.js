@@ -34903,7 +34903,15 @@ async function compileChangelog({ issues, repoName, version, }) {
     for (const issue of issues) {
         try {
             const assignee = await issue.assignee;
-            changelog.push(`• (<${issue.url}|${issue.identifier}>) ${issue.title} - _${assignee?.name}_`);
+            const attachments = await issue.attachments();
+            const githubLinks = attachments.nodes.reduce((acc, attachment) => {
+                if (attachment.sourceType === "github") {
+                    const prId = attachment.url.split("/").pop();
+                    acc.push(`<${attachment.url}|#${prId}>`);
+                }
+                return acc;
+            }, []);
+            changelog.push(`• (<${issue.url}|${issue.identifier}>) ${issue.title} - _${assignee?.name}_`, `    PRs: ${githubLinks.join(", ")}\n`);
         }
         catch (error) {
             core.warning(`Failed to get assignee for issue ${issue.identifier}: ${error}`);
