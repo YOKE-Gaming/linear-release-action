@@ -34695,11 +34695,12 @@ async function run() {
         const apiKey = (0, utils_1.getInput)("linearApiKey");
         const slackToken = (0, utils_1.getInput)("slackToken");
         const slackChannel = (0, utils_1.getInput)("slackChannel");
+        const appName = (0, utils_1.getInput)("appName");
         // Initialize clients
         const client = new sdk_1.LinearClient({ apiKey });
         const slackClient = new web_api_1.WebClient(slackToken);
         // Get version and repo name
-        const version = (0, utils_1.getVersion)();
+        const version = (0, utils_1.getVersion)(appName);
         const repoName = (0, utils_1.getRepoName)();
         const versionLabel = await (0, utils_1.createVersionLabel)({ client, version, repoName });
         const doneStatus = await (0, utils_1.getDoneStatus)(client);
@@ -34763,9 +34764,10 @@ const core = __importStar(__nccwpck_require__(6847));
 const fs = __importStar(__nccwpck_require__(9896));
 const dotenv = __importStar(__nccwpck_require__(3329));
 dotenv.config({ path: ".env.local" });
-function getVersion() {
+function getVersion(appName) {
+    const prefix = appName ? `apps/${appName}/` : "";
     try {
-        const appJson = JSON.parse(fs.readFileSync("app.json", "utf8"));
+        const appJson = JSON.parse(fs.readFileSync(`${prefix}app.json`, "utf8"));
         if (appJson) {
             return `${appJson.expo.version}-${appJson.expo.extra.ota.version}`;
         }
@@ -34773,7 +34775,7 @@ function getVersion() {
     catch {
         // no-op
     }
-    const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
+    const packageJson = JSON.parse(fs.readFileSync(`${prefix}package.json`, "utf8"));
     return packageJson.version;
 }
 exports.getVersion = getVersion;

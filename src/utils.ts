@@ -6,9 +6,10 @@ import { WebClient } from "@slack/web-api";
 import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
-export function getVersion(): string {
+export function getVersion(appName: string): string {
+  const prefix = appName ? `apps/${appName}/` : "";
   try {
-    const appJson = JSON.parse(fs.readFileSync("app.json", "utf8"));
+    const appJson = JSON.parse(fs.readFileSync(`${prefix}app.json`, "utf8"));
     if (appJson) {
       return `${appJson.expo.version}-${appJson.expo.extra.ota.version}`;
     }
@@ -16,7 +17,7 @@ export function getVersion(): string {
     // no-op
   }
 
-  const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
+  const packageJson = JSON.parse(fs.readFileSync(`${prefix}package.json`, "utf8"));
   return packageJson.version;
 }
 

@@ -24,13 +24,14 @@ export async function run() {
     const apiKey = getInput("linearApiKey");
     const slackToken = getInput("slackToken");
     const slackChannel = getInput("slackChannel");
+    const appName = getInput("appName");
 
     // Initialize clients
     const client = new LinearClient({ apiKey });
     const slackClient = new WebClient(slackToken);
 
     // Get version and repo name
-    const version = getVersion();
+    const version = getVersion(appName);
     const repoName = getRepoName();
 
     const versionLabel = await createVersionLabel({client, version, repoName});
