@@ -34709,7 +34709,7 @@ async function run() {
             repoName,
             stateId: doneStatus.id,
         });
-        const changelog = await (0, utils_1.compileChangelog)({ issues, repoName, version });
+        const changelog = await (0, utils_1.compileChangelog)({ appName, issues, repoName, version });
         core.info(`Changelog:\n${changelog}`);
         core.info(`Sending to Slack...`);
         await (0, utils_1.sendToSlack)(slackClient, slackChannel, changelog);
@@ -34895,30 +34895,38 @@ async function updateIssues(client, { versionLabel, repoName, stateId, }) {
     return issuesToUpdate.nodes;
 }
 exports.updateIssues = updateIssues;
-async function compileChangelog({ issues, repoName, version, }) {
+async function compileChangelog({ appName, issues, repoName, version, }) {
+    const projectName = appName ? `nilclub-${appName}` : repoName;
     const changelog = [
-        `*Release Notes: \`${repoName}-${version}\`* has been successfully released! :rocket:`,
+        `*Release Notes: \`${projectName}-${version}\`* has been successfully released! :rocket:`,
         `*Release Date:* ${new Date().toLocaleDateString()}`,
         `*Total Issues:* ${issues.length}\n`,
         "Here's a summary of the completed issues:",
     ];
-    for (const issue of issues) {
-        try {
-            const assignee = await issue.assignee;
-            const attachments = await issue.attachments();
-            const githubLinks = attachments.nodes.reduce((acc, attachment) => {
-                if (attachment.sourceType === "github") {
-                    const prId = attachment.url.split("/").pop();
-                    acc.push(`<${attachment.url}|#${prId}>`);
-                }
-                return acc;
-            }, []);
-            changelog.push(`• (<${issue.url}|${issue.identifier}>) ${issue.title} - _${assignee?.name}_`, `    PRs: ${githubLinks.join(", ")}\n`);
-        }
-        catch (error) {
-            core.warning(`Failed to get assignee for issue ${issue.identifier}: ${error}`);
-        }
-    }
+    // for (const issue of issues) {
+    //   try {
+    //     const assignee = await issue.assignee;
+    //     const attachments = await issue.attachments();
+    //     const githubLinks = attachments.nodes.reduce<string[]>(
+    //       (acc, attachment) => {
+    //         if (attachment.sourceType === "github") {
+    //           const prId = attachment.url.split("/").pop();
+    //           acc.push(`<${attachment.url}|#${prId}>`);
+    //         }
+    //         return acc;
+    //       },
+    //       []
+    //     );
+    //     changelog.push(
+    //       `• (<${issue.url}|${issue.identifier}>) ${issue.title} - _${assignee?.name}_`,
+    //       `    PRs: ${githubLinks.join(", ")}\n`
+    //     );
+    //   } catch (error) {
+    //     core.warning(
+    //       `Failed to get assignee for issue ${issue.identifier}: ${error}`
+    //     );
+    //   }
+    // }
     return changelog.join("\n");
 }
 exports.compileChangelog = compileChangelog;

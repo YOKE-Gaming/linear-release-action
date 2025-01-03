@@ -43,7 +43,7 @@ export async function run() {
       stateId: doneStatus.id,
     });
 
-    const changelog = await compileChangelog({ issues, repoName, version });
+    const changelog = await compileChangelog({ appName, issues, repoName, version });
     core.info(`Changelog:\n${changelog}`);
     core.info(`Sending to Slack...`);
     await sendToSlack(slackClient, slackChannel, changelog);
