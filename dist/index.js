@@ -34903,30 +34903,23 @@ async function compileChangelog({ appName, issues, repoName, version, }) {
         `*Total Issues:* ${issues.length}\n`,
         "Here's a summary of the completed issues:",
     ];
-    // for (const issue of issues) {
-    //   try {
-    //     const assignee = await issue.assignee;
-    //     const attachments = await issue.attachments();
-    //     const githubLinks = attachments.nodes.reduce<string[]>(
-    //       (acc, attachment) => {
-    //         if (attachment.sourceType === "github") {
-    //           const prId = attachment.url.split("/").pop();
-    //           acc.push(`<${attachment.url}|#${prId}>`);
-    //         }
-    //         return acc;
-    //       },
-    //       []
-    //     );
-    //     changelog.push(
-    //       `• (<${issue.url}|${issue.identifier}>) ${issue.title} - _${assignee?.name}_`,
-    //       `    PRs: ${githubLinks.join(", ")}\n`
-    //     );
-    //   } catch (error) {
-    //     core.warning(
-    //       `Failed to get assignee for issue ${issue.identifier}: ${error}`
-    //     );
-    //   }
-    // }
+    for (const issue of issues) {
+        try {
+            const assignee = await issue.assignee;
+            const attachments = await issue.attachments();
+            const githubLinks = attachments.nodes.reduce((acc, attachment) => {
+                if (attachment.sourceType === "github") {
+                    const prId = attachment.url.split("/").pop();
+                    acc.push(`<${attachment.url}|#${prId}>`);
+                }
+                return acc;
+            }, []);
+            changelog.push(`• (<${issue.url}|${issue.identifier}>) ${issue.title} - _${assignee?.name}_`, `    PRs: ${githubLinks.join(", ")}\n`);
+        }
+        catch (error) {
+            core.warning(`Failed to get assignee for issue ${issue.identifier}: ${error}`);
+        }
+    }
     return changelog.join("\n");
 }
 exports.compileChangelog = compileChangelog;
