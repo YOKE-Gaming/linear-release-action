@@ -34651,6 +34651,22 @@ module.exports = {
 
 /***/ }),
 
+/***/ 284:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.APP_LABEL_MAPPER = void 0;
+exports.APP_LABEL_MAPPER = {
+    web: "nilclub-web",
+    admin: "nilclub-admin",
+    mobile: "nilclub-mobile",
+};
+
+
+/***/ }),
+
 /***/ 4333:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -34686,6 +34702,7 @@ const utils_1 = __nccwpck_require__(804);
 const core = __importStar(__nccwpck_require__(6847));
 const web_api_1 = __nccwpck_require__(9927);
 const dotenv = __importStar(__nccwpck_require__(3329));
+const constants_1 = __nccwpck_require__(284);
 // Used for local development
 dotenv.config({ path: ".env.local" });
 async function run() {
@@ -34701,15 +34718,15 @@ async function run() {
         const slackClient = new web_api_1.WebClient(slackToken);
         // Get version and repo name
         const version = (0, utils_1.getVersion)(appName);
-        const repoName = (0, utils_1.getRepoName)();
-        const versionLabel = await (0, utils_1.createVersionLabel)({ client, version, repoName });
+        const labelName = constants_1.APP_LABEL_MAPPER[appName];
+        const versionLabel = await (0, utils_1.createVersionLabel)({ client, version, labelName });
         const doneStatus = await (0, utils_1.getDoneStatus)(client);
         const issues = await (0, utils_1.updateIssues)(client, {
             versionLabel,
-            repoName,
+            labelName,
             stateId: doneStatus.id,
         });
-        const changelog = await (0, utils_1.compileChangelog)({ appName, issues, repoName, version });
+        const changelog = await (0, utils_1.compileChangelog)({ appName, issues, labelName, version });
         core.info(`Changelog:\n${changelog}`);
         core.info(`Sending to Slack...`);
         await (0, utils_1.sendToSlack)(slackClient, slackChannel, changelog);
@@ -34759,13 +34776,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.sendToSlack = exports.compileChangelog = exports.updateIssues = exports.getDoneStatus = exports.createVersionLabel = exports.getInput = exports.getRepoName = exports.getVersion = void 0;
+exports.sendToSlack = exports.compileChangelog = exports.updateIssues = exports.getDoneStatus = exports.createVersionLabel = exports.getInput = exports.getVersion = void 0;
 const core = __importStar(__nccwpck_require__(6847));
 const fs = __importStar(__nccwpck_require__(9896));
 const dotenv = __importStar(__nccwpck_require__(3329));
 dotenv.config({ path: ".env.local" });
 function getVersion(appName) {
-    const prefix = appName ? `apps/${appName}/` : "";
+    const prefix = `apps/${appName}/`;
     try {
         const appJson = JSON.parse(fs.readFileSync(`${prefix}app.json`, "utf8"));
         if (appJson) {
@@ -34779,37 +34796,34 @@ function getVersion(appName) {
     return packageJson.version;
 }
 exports.getVersion = getVersion;
-function getRepoName() {
-    return process.env.GITHUB_REPOSITORY?.split("/")[1] ?? "";
-}
-exports.getRepoName = getRepoName;
 function getInput(name) {
     return process.env[name] ?? core.getInput(name);
 }
 exports.getInput = getInput;
-async function createVersionLabel({ client, version, repoName, }) {
+async function createVersionLabel({ client, version, labelName, }) {
     core.info(`Creating a new label for version: ${version}...`);
     const parentLabelNodes = await client.issueLabels({
         filter: {
             name: {
-                in: [`Versions - ${repoName}`],
+                in: [`Versions - ${labelName}`],
             },
         },
     });
     const parentLabel = parentLabelNodes.nodes[0];
     if (!parentLabel) {
-        core.setFailed(`Parent label "Versions - ${repoName}" not found in Linear.`);
+        core.setFailed(`Parent label "Versions - ${labelName}" not found in Linear.`);
     }
     const parentId = parentLabel.id;
     const teamId = (await parentLabel.team)?.id;
     if (!teamId) {
-        core.setFailed(`Team not found for label "Versions - ${repoName}"`);
+        core.setFailed(`Team not found for label "Versions - ${labelName}"`);
     }
+    const versionLabelName = `${labelName} - ${version}`;
     // this will throw an error if the label already exists
     let versionLabel;
     try {
         const createdLabel = await client.createIssueLabel({
-            name: version,
+            name: versionLabelName,
             color: parentLabel.color,
             teamId,
             parentId,
@@ -34821,7 +34835,7 @@ async function createVersionLabel({ client, version, repoName, }) {
         const versionLabelNodes = await client.issueLabels({
             filter: {
                 name: {
-                    eq: version,
+                    eq: versionLabelName,
                 },
                 team: {
                     id: {
@@ -34859,13 +34873,13 @@ async function getDoneStatus(client) {
     return doneStatus;
 }
 exports.getDoneStatus = getDoneStatus;
-async function updateIssues(client, { versionLabel, repoName, stateId, }) {
-    core.info(`Finding "Ready For Release" issues in ${repoName}...`);
+async function updateIssues(client, { versionLabel, labelName, stateId, }) {
+    core.info(`Finding "Ready For Release" issues in ${labelName}...`);
     const issuesToUpdate = await client.issues({
         filter: {
             labels: {
                 name: {
-                    eq: repoName,
+                    eq: labelName,
                 },
             },
             state: {
@@ -34895,10 +34909,9 @@ async function updateIssues(client, { versionLabel, repoName, stateId, }) {
     return issuesToUpdate.nodes;
 }
 exports.updateIssues = updateIssues;
-async function compileChangelog({ appName, issues, repoName, version, }) {
-    const projectName = appName ? `nilclub-${appName}` : repoName;
+async function compileChangelog({ appName, issues, labelName, version, }) {
     const changelog = [
-        `*Release Notes: \`${projectName}-${version}\`* has been successfully released! :rocket:`,
+        `*Release Notes: \`${labelName}-${version}\`* has been successfully released! :rocket:`,
         `*Release Date:* ${new Date().toLocaleDateString()}`,
         `*Total Issues:* ${issues.length}\n`,
         "Here's a summary of the completed issues:",

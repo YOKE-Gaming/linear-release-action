@@ -7,7 +7,7 @@ import * as dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
 export function getVersion(appName: string): string {
-  const prefix = appName ? `apps/${appName}/` : "";
+  const prefix = `apps/${appName}/`;
   try {
     const appJson = JSON.parse(fs.readFileSync(`${prefix}app.json`, "utf8"));
     if (appJson) {
@@ -21,10 +21,6 @@ export function getVersion(appName: string): string {
   return packageJson.version;
 }
 
-export function getRepoName(): string {
-  return process.env.GITHUB_REPOSITORY?.split("/")[1] ?? "";
-}
-
 export function getInput(name: string): string {
   return process.env[name] ?? core.getInput(name);
 }
@@ -32,37 +28,39 @@ export function getInput(name: string): string {
 export async function createVersionLabel({
   client,
   version,
-  repoName,
+  labelName,
 }: {
   client: LinearClient;
   version: string;
-  repoName: string;
+  labelName: string;
 }): Promise<IssueLabel> {
   core.info(`Creating a new label for version: ${version}...`);
   const parentLabelNodes = await client.issueLabels({
     filter: {
       name: {
-        in: [`Versions - ${repoName}`],
+        in: [`Versions - ${labelName}`],
       },
     },
   });
   const parentLabel = parentLabelNodes.nodes[0];
   if (!parentLabel) {
     core.setFailed(
-      `Parent label "Versions - ${repoName}" not found in Linear.`
+      `Parent label "Versions - ${labelName}" not found in Linear.`
     );
   }
   const parentId = parentLabel.id;
   const teamId = (await parentLabel.team)?.id;
   if (!teamId) {
-    core.setFailed(`Team not found for label "Versions - ${repoName}"`);
+    core.setFailed(`Team not found for label "Versions - ${labelName}"`);
   }
+
+  const versionLabelName = `${labelName} - ${version}`;
 
   // this will throw an error if the label already exists
   let versionLabel;
   try {
     const createdLabel = await client.createIssueLabel({
-      name: version,
+      name: versionLabelName,
       color: parentLabel.color,
       teamId,
       parentId,
@@ -73,7 +71,7 @@ export async function createVersionLabel({
     const versionLabelNodes = await client.issueLabels({
       filter: {
         name: {
-          eq: version,
+          eq: versionLabelName,
         },
         team: {
           id: {
@@ -117,16 +115,16 @@ export async function updateIssues(
   client: LinearClient,
   {
     versionLabel,
-    repoName,
+    labelName,
     stateId,
-  }: { versionLabel: IssueLabel; repoName: string; stateId: string }
+  }: { versionLabel: IssueLabel; labelName: string; stateId: string }
 ) {
-  core.info(`Finding "Ready For Release" issues in ${repoName}...`);
+  core.info(`Finding "Ready For Release" issues in ${labelName}...`);
   const issuesToUpdate = await client.issues({
     filter: {
       labels: {
         name: {
-          eq: repoName,
+          eq: labelName,
         },
       },
       state: {
@@ -162,17 +160,16 @@ export async function updateIssues(
 export async function compileChangelog({
   appName,
   issues,
-  repoName,
+  labelName,
   version,
 }: {
   appName: string;
   issues: Issue[];
-  repoName: string;
+  labelName: string;
   version: string;
 }): Promise<string> {
-  const projectName = appName ? `nilclub-${appName}` : repoName;
   const changelog = [
-    `*Release Notes: \`${projectName}-${version}\`* has been successfully released! :rocket:`,
+    `*Release Notes: \`${labelName}-${version}\`* has been successfully released! :rocket:`,
     `*Release Date:* ${new Date().toLocaleDateString()}`,
     `*Total Issues:* ${issues.length}\n`,
     "Here's a summary of the completed issues:",

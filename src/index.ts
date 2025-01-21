@@ -1,7 +1,6 @@
 import { LinearClient } from "@linear/sdk";
 import {
   getVersion,
-  getRepoName,
   getDoneStatus,
   updateIssues,
   sendToSlack,
@@ -13,7 +12,7 @@ import * as core from "@actions/core";
 import { WebClient } from "@slack/web-api";
 
 import * as dotenv from "dotenv";
-
+import { APP_LABEL_MAPPER } from "./constants";
 // Used for local development
 dotenv.config({ path: ".env.local" });
 
@@ -24,7 +23,7 @@ export async function run() {
     const apiKey = getInput("linearApiKey");
     const slackToken = getInput("slackToken");
     const slackChannel = getInput("slackChannel");
-    const appName = getInput("appName");
+    const appName = getInput("appName") as keyof typeof APP_LABEL_MAPPER;
 
     // Initialize clients
     const client = new LinearClient({ apiKey });
@@ -32,18 +31,18 @@ export async function run() {
 
     // Get version and repo name
     const version = getVersion(appName);
-    const repoName = getRepoName();
+    const labelName = APP_LABEL_MAPPER[appName];
 
-    const versionLabel = await createVersionLabel({client, version, repoName});
+    const versionLabel = await createVersionLabel({client, version, labelName});
     const doneStatus = await getDoneStatus(client);
 
     const issues = await updateIssues(client, {
       versionLabel,
-      repoName,
+      labelName,
       stateId: doneStatus.id,
     });
 
-    const changelog = await compileChangelog({ appName, issues, repoName, version });
+    const changelog = await compileChangelog({ appName, issues, labelName, version });
     core.info(`Changelog:\n${changelog}`);
     core.info(`Sending to Slack...`);
     await sendToSlack(slackClient, slackChannel, changelog);
